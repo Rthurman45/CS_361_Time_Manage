@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Tagalong</title>
+
+<link rel="stylesheet" href="/design/style.css">
+
+</head>
+
+
+<body>
+
+
+<h1>Tagalong</h1>
+
+<p>Find activities. Join friends. Have fun.</p>
+
+
+<h2>Login</h2>
+
+<form action="/login" method="post">
+
+<input 
+    name="username" 
+    placeholder="Enter your username"
+    required
+>
+
+<button type="submit">
+Login
+</button>
+
+</form>
+
+<p>
+Current user: {{ current_user }}
+</p>
+
+<h2>Create Activity</h2>
+
+
+<form action="/create" method="post">
+
+
+<input name="name" placeholder="Activity Name">
+
+<input name="date" placeholder="Date">
+
+<input name="time" placeholder="Time">
+
+<input name="location" placeholder="Location">
+
+<textarea name="description"
+placeholder="Description"></textarea>
+
+
+<button type="submit">
+Create Activity
+</button>
+
+
+</form>
+
+
+
+<h2>Activity Feed</h2>
+
+
+{% for activity in activities %}
+
+
+<div class="card">
+
+
+<h3>{{ activity["name"] }}</h3>
+
+
+{% if preferences["simple_view"] %}
+
+<p>
+📍 {{ activity["location"] }}
+</p>
+
+
+{% else %}
+
+
+<p>
+📅 {{ activity["date"] }}
+</p>
+
+
+<p>
+⏰ {{ activity["time"] }}
+</p>
+
+
+<p>
+📍 {{ activity["location"] }}
+</p>
+
+
+<p>
+{{ activity["description"] }}
+</p>
+
+
+{% endif %}
+
+
+
+<form action="/join/{{ activity['id'] }}" method="post">
+
+<button type="submit">
+Join
+</button>
+
+</form>
+
+
+
+</div>
+
+
+{% endfor %}
+
+
+
+
+<h2>My Joined Activities</h2>
+
+
+{% for activity in joined %}
+
+
+<div class="card">
+
+
+<h3>
+{{ activity["name"] }}
+</h3>
+
+
+<form action="/leave/{{ activity['id'] }}" method="post">
+
+
+<button type="submit">
+Leave
+</button>
+
+
+</form>
+
+
+</div>
+
+
+{% endfor %}
+
+
+
+
+
+<h2>Accessibility Settings</h2>
+
+
+
+<form action="/settings" method="post">
+
+
+<label>
+Text Size:
+</label>
+
+
+<select name="text_size">
+
+
+<option value="normal">
+Normal
+</option>
+
+
+<option value="large">
+Large
+</option>
+
+
+<option value="extra">
+Extra Large
+</option>
+
+
+</select>
+
+
+
+<br>
+
+
+<label>
+
+<input type="checkbox" name="simple_view">
+
+Simple View
+
+</label>
+
+
+<br>
+
+
+<button type="submit">
+Save Settings
+</button>
+
+
+</form>
+
+
+
+</body>
+
+</html>
