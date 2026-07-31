@@ -1,56 +1,153 @@
 body {
-
     font-family: Arial, sans-serif;
-
     max-width: 900px;
-
     margin: auto;
-
     padding: 20px;
-
 }
 
+/* Accessibility: Text Size setting now actually resizes the page (WCAG 1.4.4) */
+body.text-large {
+    font-size: 1.25em;
+}
+
+body.text-extra {
+    font-size: 1.6em;
+}
 
 h1 {
-
-    text-align:center;
-
+    text-align: center;
 }
 
+.tabbar {
+    display: flex;
+    justify-content: center;
+    gap: 18px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 15px 0;
+    background: #f7f7f7;
+}
 
+.tabbar a {
+    text-decoration: none;
+    color: #333;
+    font-weight: bold;
+}
+
+.tabbar a:hover,
+.tabbar a:focus {
+    text-decoration: underline;
+}
 
 .card {
-
-    border:1px solid #ccc;
-
-    border-radius:10px;
-
-    padding:15px;
-
-    margin:15px 0;
-
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 15px;
+    margin: 15px 0;
 }
 
+.category-label {
+    color: #666;
+    font-size: 0.85em;
+    margin-top: -8px;
+}
 
 input, textarea, select {
-
-
-    display:block;
-
-    width:100%;
-
-    padding:10px;
-
-    margin:8px 0;
-
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    font-size: 1em;
 }
 
+label {
+    font-weight: bold;
+    margin-top: 10px;
+}
 
 button {
+    padding: 10px 20px;
+    cursor: pointer;
+}
 
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
 
-    padding:10px 20px;
+/* Visible focus ring for keyboard users, on every interactive element */
+a:focus, button:focus, input:focus, textarea:focus, select:focus, summary:focus {
+    outline: 3px solid #4b6bfb;
+    outline-offset: 2px;
+}
 
-    cursor:pointer;
+.inline-form {
+    display: inline-block;
+    margin-top: 6px;
+}
 
+.tagline {
+    color: #4b6bfb;
+    font-weight: bold;
+}
+
+.note, .hint {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.error {
+    color: #b00020;
+    font-weight: bold;
+}
+
+.success {
+    color: #1a7f37;
+    font-weight: bold;
+}
+
+.steps {
+    color: #4b6bfb;
+    font-weight: bold;
+}
+
+.filter-bar {
+    margin-bottom: 15px;
+}
+
+.category-tabs {
+    display: flex;
+    gap: 10px;
+    margin: 8px 0;
+}
+
+.category-tabs a {
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    text-decoration: none;
+    color: #333;
+}
+
+.category-tabs a.active {
+    background: #4b6bfb;
+    color: white;
+    border-color: #4b6bfb;
+}
+
+details summary {
+    cursor: pointer;
+    color: #4b6bfb;
+    font-weight: bold;
+    margin-top: 8px;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
 }

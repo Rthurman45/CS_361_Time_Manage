@@ -1,37 +1,65 @@
 <!DOCTYPE html>
-
-<html>
+<html lang="en">
 
 <head>
-
+<meta charset="utf-8">
 <title>Tagalong</title>
-
 <link rel="stylesheet" href="/design/style.css">
-
 </head>
 
-
-<body>
-
+<body class="text-{{ preferences['text_size'] }}">
 
 <h1>Tagalong</h1>
-
 <p>Find activities. Join friends. Have fun.</p>
 
+<!-- IH#4: Keep familiar features available - a persistent tab bar,
+     the same pattern used by most social apps, so returning users
+     always know where things are. -->
+<nav class="tabbar" aria-label="Main">
+    <a href="#feed">Home</a>
+    <a href="#search-box">Search</a>
+    <a href="#post-form">Post</a>
+    <a href="#joined">Calendar</a>
+    <a href="#login">Profile</a>
+</nav>
 
-<h2>Login</h2>
+<h2 id="login">Login</h2>
+
+{% if err == "login_missing" %}
+<p class="error" role="alert">! Username and password are both required.</p>
+{% elif err == "login_bad" %}
+<p class="error" role="alert">! That password doesn't match this username. Try again.</p>
+{% endif %}
 
 <form action="/login" method="post">
 
-<input 
-    name="username" 
-    placeholder="Enter your username"
-    required
->
+    <!-- IH#1: Explain the benefit up front, before any sign-up effort -->
+    <p class="tagline">See what your friends are doing &mdash; join in one tap.</p>
 
-<button type="submit">
-Login
-</button>
+    <label for="username">Username</label>
+    <input
+        id="username"
+        name="username"
+        placeholder="Enter your username"
+        required
+    >
+
+    <label for="password">Password</label>
+    <input
+        id="password"
+        name="password"
+        type="password"
+        placeholder="Enter your password"
+        required
+    >
+
+    <button type="submit">
+        Login
+    </button>
+
+    <!-- IH#2: Explain the cost of using the feature (privacy) right where
+         the decision to log in / post is being made -->
+    <p class="note">(i) Only friends you've added can see what you post &mdash; nothing you share here is ever public.</p>
 
 </form>
 
@@ -39,189 +67,194 @@ Login
 Current user: {{ current_user }}
 </p>
 
-<h2>Create Activity</h2>
+<h2 id="post-form">Create Activity</h2>
 <p>only your friends can see the activities you post</p>
 
+{% if err == "post" %}
+<p class="error" role="alert">! Please add a {{ missing_field }} before posting.</p>
+{% endif %}
 
-<form action="/create" method="post">
+<!-- IH#6: Explicit numbered path through the task -->
+<p class="steps">(1) WHAT &mdash; (2) WHEN &mdash; (3) WHERE</p>
 
+<form action="/create" method="post" id="create-form">
 
-<input name="name" placeholder="Activity Name">
+    <label for="name">Activity Name</label>
+    <input id="name" name="name" placeholder="Activity Name" value="{{ form_name }}" required>
 
-<input name="date" placeholder="Date">
+    <label for="category">Category</label>
+    <select id="category" name="category" required>
+        <option value="" disabled {% if not form_category %}selected{% endif %}>Choose a category</option>
+        {% for c in categories %}
+        <option value="{{ c }}" {% if form_category == c %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+    </select>
 
-<input name="time" placeholder="Time">
+    <label for="date">Date</label>
+    <input id="date" name="date" type="date" value="{{ form_date }}" required>
 
-<input name="location" placeholder="Location">
+    <label for="time">Time</label>
+    <input id="time" name="time" type="time" value="{{ form_time }}" required>
 
-<textarea name="description"
-placeholder="Description"></textarea>
+    <label for="location">Location</label>
+    <input id="location" name="location" placeholder="Location" value="{{ form_location }}" required>
+    {% if err == "post" and missing_field == "location" %}
+    <p class="error" role="alert">! Please add a location before posting.</p>
+    {% endif %}
 
+    <label for="description">Description</label>
+    <textarea id="description" name="description" placeholder="Description">{{ form_description }}</textarea>
 
-<button type="submit">
-Create Activity
-</button>
-
+    <!-- IH#8: button starts disabled and only enables once every required
+         field has something in it, so a distracted user can't post a
+         half-filled activity -->
+    <button type="submit" id="post-submit" disabled>
+        Post Activity
+    </button>
+    <p class="hint" id="post-hint">Fill in all fields to post.</p>
 
 </form>
 
+<h2 id="feed">Activity Feed</h2>
 
+<!-- IH#7: two ways to find something - typed search OR category tabs -->
+<form action="/app" method="get" class="filter-bar">
+    <label for="search-box" class="visually-hidden">Search activities</label>
+    <input id="search-box" name="q" placeholder="Search activities..." value="{{ q }}">
+    <button type="submit">Search</button>
 
-<h2>Activity Feed</h2>
-
+    <div class="category-tabs" role="tablist" aria-label="Filter by category">
+        <a href="/app?cat=ALL{% if q %}&q={{ q }}{% endif %}" class="{% if cat == 'ALL' %}active{% endif %}">All</a>
+        {% for c in categories %}
+        <a href="/app?cat={{ c }}{% if q %}&q={{ q }}{% endif %}" class="{% if cat == c %}active{% endif %}">{{ c }}</a>
+        {% endfor %}
+    </div>
+    <p class="hint">(i) TIP: use Join on any activity to add it straight to your calendar.</p>
+</form>
 
 {% for activity in activities %}
 
-
 <div class="card">
 
+    <h3>{{ activity["name"] }}</h3>
+    <p class="category-label">{{ activity["category"] }} &middot; posted by {{ activity["host"] }}</p>
 
-<h3>{{ activity["name"] }}</h3>
+    {% if preferences["simple_view"] %}
+    <p>📍 Location: {{ activity["location"] }}</p>
+    {% else %}
+    <p>📅 Date: {{ activity["date"] }}</p>
+    <p>⏰ Time: {{ activity["time"] }}</p>
+    <p>📍 Location: {{ activity["location"] }}</p>
 
+    <!-- IH#3: collapsed by default so the feed stays scannable, but any
+         card can be expanded in place for the full description. Native
+         <details>/<summary> keeps this keyboard- and screen-reader-accessible
+         with no JavaScript required. -->
+    <details>
+        <summary>Details</summary>
+        <p>{{ activity["description"] }}</p>
+    </details>
+    {% endif %}
 
-{% if preferences["simple_view"] %}
+    <form action="/join/{{ activity['id'] }}" method="post">
+        <button type="submit">
+            Join
+        </button>
+    </form>
 
-<p>
-📍 {{ activity["location"] }}
-</p>
-
-
-{% else %}
-
-
-<p>
-📅 {{ activity["date"] }}
-</p>
-
-
-<p>
-⏰ {{ activity["time"] }}
-</p>
-
-
-<p>
-📍 {{ activity["location"] }}
-</p>
-
-
-<p>
-{{ activity["description"] }}
-</p>
-
-
-{% endif %}
-
-
-
-<form action="/join/{{ activity['id'] }}" method="post">
-
-<button type="submit">
-Join
-</button>
-
-</form>
-
-
+    <!-- IH#5: immediate confirmation with a one-tap Undo right after joining -->
+    {% if joined_id == activity["id"] %}
+    <p class="success" role="status">[OK] You're in! Added to your calendar.</p>
+    <form action="/leave/{{ activity['id'] }}" method="post" class="inline-form">
+        <button type="submit">Undo</button>
+    </form>
+    {% endif %}
 
 </div>
-
 
 {% endfor %}
 
 
-
-
-<h2>My Joined Activities</h2>
-
+<h2 id="joined">My Joined Activities</h2>
 
 {% for activity in joined %}
 
-
 <div class="card">
 
+    <h3>
+        {{ activity["name"] }}
+    </h3>
 
-<h3>
-{{ activity["name"] }}
-</h3>
+    <!-- Interoperability: standard .ics download that Google/Apple/Outlook
+         calendars can all import -->
+    <a href="/calendar/{{ activity['id'] }}.ics" download>📅 Add to Calendar</a>
 
-
-<form action="/leave/{{ activity['id'] }}" method="post">
-
-
-<button type="submit">
-Leave
-</button>
-
-
-</form>
-
+    <form action="/leave/{{ activity['id'] }}" method="post">
+        <button type="submit">
+            Leave
+        </button>
+    </form>
 
 </div>
 
-
 {% endfor %}
-
-
-
 
 
 <h2>Accessibility Settings</h2>
 
-
-
 <form action="/settings" method="post">
 
+    <label for="text_size">Text Size:</label>
 
-<label>
-Text Size:
-</label>
+    <select id="text_size" name="text_size">
+        <option value="normal" {% if preferences['text_size'] == 'normal' %}selected{% endif %}>Normal</option>
+        <option value="large" {% if preferences['text_size'] == 'large' %}selected{% endif %}>Large</option>
+        <option value="extra" {% if preferences['text_size'] == 'extra' %}selected{% endif %}>Extra Large</option>
+    </select>
 
+    <br>
 
-<select name="text_size">
+    <label>
+        <input type="checkbox" name="simple_view" {% if preferences['simple_view'] %}checked{% endif %}>
+        Simple View
+    </label>
 
+    <br>
 
-<option value="normal">
-Normal
-</option>
-
-
-<option value="large">
-Large
-</option>
-
-
-<option value="extra">
-Extra Large
-</option>
-
-
-</select>
-
-
-
-<br>
-
-
-<label>
-
-<input type="checkbox" name="simple_view">
-
-Simple View
-
-</label>
-
-
-<br>
-
-
-<button type="submit">
-Save Settings
-</button>
-
+    <button type="submit">
+        Save Settings
+    </button>
 
 </form>
 
+<script>
+// IH#8 (progressive enhancement): keep "Post Activity" disabled until every
+// required field has a value, matching the paper prototype's disabled state.
+(function () {
+    var form = document.getElementById("create-form");
+    var submitBtn = document.getElementById("post-submit");
+    var hint = document.getElementById("post-hint");
+    if (!form || !submitBtn) return;
 
+    var required = form.querySelectorAll("[required]");
+
+    function refresh() {
+        var allFilled = true;
+        required.forEach(function (field) {
+            if (!field.value) allFilled = false;
+        });
+        submitBtn.disabled = !allFilled;
+        hint.textContent = allFilled ? "Ready to post." : "Fill in all fields to post.";
+    }
+
+    required.forEach(function (field) {
+        field.addEventListener("input", refresh);
+        field.addEventListener("change", refresh);
+    });
+
+    refresh();
+})();
+</script>
 
 </body>
 
